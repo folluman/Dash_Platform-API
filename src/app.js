@@ -23,8 +23,15 @@ const createAccountLimiter = rateLimit({
     message: 'Too many accounts created from this IP, please try again after an hour.',
 });
 
+// FRONTEND_URL aceita várias origens separadas por vírgula; barra final é ignorada
+const allowedOrigins = [process.env.LOCAL_URL, process.env.FRONTEND_URL]
+    .filter(Boolean)
+    .flatMap((value) => value.split(','))
+    .map((url) => url.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+
 const corsOptions = {
-    origin: [process.env.LOCAL_URL, process.env.FRONTEND_URL],
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
 };
