@@ -9,6 +9,15 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const { passwordValidator, generateTemporaryPassword } = require('../services/passwordService');
 
+// EM PRODUÇÃO O FRONT E A API FICAM EM DOMÍNIOS DIFERENTES: O COOKIE PRECISA DE sameSite 'none' + secure
+const isProduction = process.env.NODE_ENV === 'production';
+const authCookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'strict',
+    path: '/',
+};
+
 exports.user_list = asyncHandler(async (req, res, next) => {
     const users = await User.find().exec();
     res.json(users);
@@ -108,9 +117,7 @@ exports.user_login_post = asyncHandler(async (req, res, next) => {
         );
 
         res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            ...authCookieOptions,
             maxAge: 3600000 // 1 HORA
         });
 
@@ -188,7 +195,8 @@ exports.user_change_password = [
 
 // LOGOUT USER
 exports.user_logout_post = asyncHandler(async (req, res, next) => {
-    res.clearCookie('token')
+    // PRECISA DAS MESMAS OPÇÕES DO LOGIN, SENÃO O NAVEGADOR NÃO APAGA O COOKIE
+    res.clearCookie('token', authCookieOptions)
     res.status(200).json({ message: 'Logout successful!' });
 })
 

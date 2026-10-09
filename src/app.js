@@ -37,6 +37,18 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// PROTEÇÃO CONTRA CSRF: COM sameSite 'none' O COOKIE VAI EM REQUISIÇÕES DE QUALQUER SITE,
+// ENTÃO AÇÕES QUE ALTERAM DADOS SÓ SÃO ACEITAS SE VIEREM DE UMA ORIGEM PERMITIDA
+app.use((req, res, next) => {
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+
+    const origin = req.get('origin');
+    if (origin && !allowedOrigins.includes(origin)) {
+        return res.status(403).json({ error: 'Origem não permitida.' });
+    }
+    next();
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
