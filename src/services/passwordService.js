@@ -3,8 +3,9 @@ const { body } = require('express-validator');
 
 // REGRA ÚNICA DE SENHA (CADASTRO E TROCA DE SENHA USAM A MESMA)
 // SE MUDAR AQUI, MUDE TAMBÉM EM front-end/src/services/passwordRules.js
-exports.passwordValidator = (field) =>
-    body(field)
+// { optional: true } = CAMPO PODE VIR VAZIO (EX: EDIÇÃO DE USUÁRIO SEM TROCAR A SENHA)
+exports.passwordValidator = (field, { optional = false } = {}) =>
+    (optional ? body(field).optional({ values: 'falsy' }) : body(field))
         .isString()
         .withMessage('Informe a senha.')
         .trim()

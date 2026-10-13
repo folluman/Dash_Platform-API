@@ -93,6 +93,78 @@ exports.user_create_post = [
     )
 ]
 
+// ADMIN EDITA UM USUÁRIO
+exports.user_update = [
+    body('username')
+        .isString()
+        .trim()
+        .matches(/^[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*$/)
+        .withMessage('O usuário deve conter apenas letras, números e pontos (o ponto não pode ficar no início, no fim ou repetido).'),
+    body('name')
+        .isString()
+        .trim()
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Informe o nome (até 100 caracteres).'),
+    body('email')
+        .trim()
+        .isEmail()
+        .withMessage('Informe um email válido.')
+        .normalizeEmail(),
+    body('role')
+        .isIn(['user', 'admin'])
+        .withMessage('Perfil inválido.'),
+    passwordValidator('password', { optional: true }),
+
+    asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg, details: errors.array() });
+        }
+
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+
+        const user = await User.findById(id).exec();
+        if (!user) {
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+
+        // EVITA QUE O ADMIN TIRE O PRÓPRIO ACESSO DE ADMINISTRADOR
+        if (id === req.user.id && req.body.role !== 'admin') {
+            return res.status(400).json({ error: 'Você não pode remover o seu próprio acesso de administrador.' });
+        }
+
+        const { username, name, email, role, password } = req.body;
+
+        const usernameTaken = await User.exists({ username, _id: { $ne: id } });
+        if (usernameTaken) {
+            return res.status(400).json({ error: 'Este usuário (login) já está em uso.' });
+        }
+
+        const emailTaken = await User.exists({ email, _id: { $ne: id } });
+        if (emailTaken) {
+            return res.status(400).json({ error: 'Este email já está em uso.' });
+        }
+
+        user.username = username;
+        user.name = name;
+        user.email = email;
+        user.role = role;
+
+        // SENHA DEFINIDA PELO ADMIN: O USUÁRIO TROCA NO PRÓXIMO LOGIN (MESMA REGRA DO CADASTRO)
+        if (password) {
+            user.password = await bcrypt.hash(password, saltRounds);
+            if (id !== req.user.id) user.mustChangePassword = true;
+        }
+
+        await user.save();
+
+        res.status(200).json({ message: 'Usuário atualizado com sucesso!' });
+    })
+]
+
 // LOGIN USER
 exports.user_login_post = asyncHandler(async (req, res, next) => {
     try {

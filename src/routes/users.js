@@ -8,6 +8,7 @@ const { requirePasswordChanged } = require('../middlewares/passwordMiddleware')
 
 router.get('/list', verifyToken, requirePasswordChanged, isAdmin, userController.user_list);
 router.post('/signup', userController.user_create_post);
+router.put('/edit/:id', verifyToken, requirePasswordChanged, isAdmin, userController.user_update);
 router.delete('/delete/:id', verifyToken, requirePasswordChanged, isAdmin, userController.user_delete);
 router.post('/reset-password/:id', verifyToken, requirePasswordChanged, isAdmin, userController.user_reset_password);
 router.post('/login', userController.user_login_post);
