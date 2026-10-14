@@ -8,22 +8,22 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
-// FILTRO DE ACESSO: ADMIN VÊ TUDO; USUÁRIO COMUM VÊ OS PÚBLICOS E OS QUE FOI LIBERADO
+// FILTRO DE ACESSO: ADMIN VÊ TUDO; USUÁRIO COMUM VÊ OS PÚBLICOS E OS RESTRITOS EM QUE FOI LIBERADO
 // (DASHBOARDS ANTIGOS, SEM O CAMPO visibility, CONTAM COMO PÚBLICOS)
 async function accessFilter(req) {
     const user = await User.findById(req.user.id).exec();
     if (user && user.role === 'admin') return {};
     return {
         $or: [
-            { visibility: { $ne: 'restricted' } },
-            { allowedUsers: req.user.id }
+            { visibility: { $nin: ['restricted', 'admins'] } },
+            { visibility: 'restricted', allowedUsers: req.user.id }
         ]
     };
 }
 
 // NORMALIZA OS CAMPOS DE ACESSO QUE VÊM DO FRONT
 function parseAccess(body) {
-    const visibility = body.visibility === 'restricted' ? 'restricted' : 'all';
+    const visibility = ['restricted', 'admins'].includes(body.visibility) ? body.visibility : 'all';
     const allowedUsers = visibility === 'restricted' && Array.isArray(body.allowedUsers)
         ? [...new Set(body.allowedUsers)].filter((id) => mongoose.isValidObjectId(id))
         : [];

@@ -36,10 +36,10 @@ const DashSchema = new Schema({
         type: Boolean,
         default: true
     },
-    // 'all' = TODOS OS USUÁRIOS | 'restricted' = SÓ OS USUÁRIOS EM allowedUsers
+    // 'all' = TODOS | 'restricted' = SÓ OS USUÁRIOS EM allowedUsers | 'admins' = SÓ ADMINISTRADORES
     visibility: {
         type: String,
-        enum: ['all', 'restricted'],
+        enum: ['all', 'restricted', 'admins'],
         default: 'all'
     },
     allowedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
