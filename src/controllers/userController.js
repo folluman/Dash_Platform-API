@@ -8,13 +8,11 @@ const saltRounds = 10;
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const { passwordValidator, generateTemporaryPassword } = require('../services/passwordService');
-
-// EM PRODUÇÃO O FRONT E A API FICAM EM DOMÍNIOS DIFERENTES: O COOKIE PRECISA DE sameSite 'none' + secure
 const isProduction = process.env.NODE_ENV === 'production';
 const authCookieOptions = {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'none' : 'strict',
+    sameSite: 'strict',
     path: '/',
 };
 

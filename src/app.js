@@ -9,7 +9,9 @@ const mongoSanitize = require('express-mongo-sanitize');
 
 const app = express();
 
-app.set('trust proxy', 1);
+// QUANTOS PROXIES FICAM NA FRENTE DA API (RENDER = 1; VERCEL + RENDER = 2).
+// SERVE PARA O RATE LIMIT ENXERGAR O IP REAL DO USUÁRIO E NÃO O DA VERCEL
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 1);
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
